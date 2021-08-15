@@ -1,0 +1,15 @@
+#!/bin/bash
+
+$install docker
+dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+yum install docker -y
+
+#install java
+yum -y install java-11-openjdk-devel java-11-openjdk
+#intall jenkins
+wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+yum upgrade -Y
+yum install epel-release java-11-openjdk-devel -Y
+yum install jenkins
+systemctl daemon-reload
