@@ -2,7 +2,7 @@
 
 #install docker
  yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-yum install docker -y
+yum install docker-ce -y
 
 #install java
 yum -y install java-11-openjdk-devel java-11-openjdk
