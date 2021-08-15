@@ -1,0 +1,58 @@
+node {
+    stage ('SCM checkout'){
+        //git 'https://github.com/sachinparulkar/my-app.git'
+        git 'https://github.com/sachinparulkar/sap_mvn_sonar'
+    }
+    stage ('sonarqube code analysis')
+        withSonarQubeEnv(credentialsId: 'sonarqube_token') {
+        def mvnHome = tool name: 'maven', type: 'maven'
+        def mvnCMD = "${mvnHome}/bin/mvn"
+        sh "${mvnCMD} sonar:sonar"
+    }
+    //stage ('Dependency check'){
+    //        def mvnHome = tool name: 'maven' 
+    //    def mvnCMD = "$mvnHome/bin/mvn"
+    //   sh '${mvnCMD} dependency-check:check'
+    //   dependencyCheckPublisher pattern: 'target/dependency-check-report.xml'
+//    }
+    
+    stage ('sonarqube qwality gate'){
+        timeout(time: 1, unit: 'HOURS') {
+         withSonarQubeEnv(credentialsId: 'sonarqube_token') {
+             abortpipeline = true
+             //abortpipeline: true
+         }
+    }
+    stage ('build code'){
+        def mvnHome = tool name: 'maven' 
+        def mvnCMD = "$mvnHome/bin/mvn"
+        sh "${mvnCMD} clean install"
+        }
+    }
+     //stage('Deploy Dev'){
+      // sh 'mv target/myweb*.war target/myweb.war' 
+     //}
+
+    stage ('Build Docker image'){
+          //withCredentials([string(credentialsId: 'dockerhubpwd', variable: 'dockerhubpwd')]) {
+        //sh "docker login -u sachinparulkar -p ${dockerHubPwd}"
+        sh 'docker login -u sachinparulkar -p Chitilogo_2883'
+        sh 'docker build -t sachinparulkar/test1:2.0.0 .'
+          }
+    //}
+     stage ('push Docker image'){
+          //withCredentials([string(credentialsId: 'dockerhubpwd', variable: 'dockerhubpwd')]) {
+        //sh "docker login -u sachinparulkar -p ${dockerHubPwd}"
+      // sh 'docker login -u sachinparulkar -p Chitilogo_2883'
+       sh 'docker push sachinparulkar/test1:2.0.0 '
+        }
+     stage('Run Container on app Server'){
+    echo "hi"
+     sh 'docker run -p 8080:8080 -d --name myapp -v myapp_config:/etc/myapp sachinparulkar/test1:2.0.0'
+     //def dockerRun = 'docker run -p 8085:8085-d sachinparulkar/my-app:1.0.0'
+    //sshagent(['docker-app']) {
+        //sh 'ssh -o StrictHostKeyChecking=no azureuser@52.188.83.254  sudo yum install docker -y'
+     //sh "ssh -o StrictHostKeyChecking=no azureuser@40.76.109.0 ${dockerRun}"
+      }
+   }
+        

@@ -1,0 +1,119 @@
+1. create vm
+2. insatll docker
+	sudo dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+	yum install docker
+
+3. install java 11
+	sudo yum -y install java-11-openjdk-devel java-11-openjdk
+4.install tomcat
+	wget https://mirrors.estointernet.in/apache/tomcat/tomcat-9/v9.0.52/bin/apache-tomcat-9.0.52.tar.gz
+	tar -xvf apache*
+	cd apche*
+
+	sudo useradd -m -d /opt/tomcat -U -s /bin/false tomcat
+	mv apache-tomcat-9.0.52/* /opt/tomcat/
+	cd /opt/tomcat/
+	vim /etc/systemd/system/tomcat.service   and add below
+
+			[Unit]
+		Description=Tomcat 9
+		After=network.target
+
+		[Service]
+		Type=forking
+
+		User=tomcat
+		Group=tomcat
+
+		Environment="JAVA_HOME=/usr/lib/jvm/jre"
+		Environment="JAVA_OPTS=-Djava.security.egd=file:///dev/urandom"
+		Environment="CATALINA_BASE=/opt/tomcat"
+		Environment="CATALINA_HOME=/opt/tomcat"
+		Environment="CATALINA_PID=/opt/tomcat/temp/tomcat.pid"
+		Environment="CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC"
+
+		ExecStart=/opt/tomcat/bin/startup.sh
+		ExecStop=/opt/tomcat/bin/shutdown.sh
+
+		[Install]
+		WantedBy=multi-user.target
+	systemctl restart tomcat
+
+
+
+4. intall jenkins
+	sudo wget -O /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/redhat-stable/jenkins.repo
+	sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+	sudo yum upgrade
+	sudo yum install epel-release java-11-openjdk-devel
+	sudo yum install jenkins
+	sudo systemctl daemon-reload
+
+5. chg port of jenkins
+	vim /etc/sysconfig/jenkins
+	sudo firewall-cmd  --permanent --zone=public --add-port=9999/tcp
+	firewall-cmd --reload
+
+6. restart jenkins	
+	ip:9999 and jenkins intial setup
+
+7.setenforce 0
+
+
+8. install plugin 
+	maven
+	sonar
+	prometheus
+	grafana
+	docker
+	ssh-agent
+	OWASP depency check
+	github
+	deploye to container
+9. run sonarqube on docker
+	docker run -u root -d --name sonarqube -p 9000:9000 -v sonarqube_config:/etc/sonarqube sonarqube
+	sudo firewall-cmd  --permanent --zone=public --add-port=9000/tcp
+	firewall-cmd --reload
+
+10. configure sonarqube
+	a. administrator> security>user>token
+	b. managejenkins> globbal configuration tool > search sonar scanner
+	c.  give name sonarqube > tck on install automatically > save
+
+11. configure sonar webhook
+	a. administration > configuration > webhook > create 
+	b. name= sonarqube > url : http://ip/sonarqube-webhook/
+12 login on docker hub
+	docker login -u sachinparulkar -p Chitilogo_2883
+
+
+13 run grafna on docker
+	docker run -d --name grafana -p 3000:3000 -v grafana_config:/etc/grafana -v grafana_data:/var/lib/grafana -v grafanna_logs:/var/log/grafana  grafana/grafana
+	sudo firewall-cmd  --permanent --zone=public --add-port=3000/tcp
+	firewall-cmd --reload
+
+14. run prometheus on docker
+	docker run -d -u root --name prometheus -p 9090:9090 -v prometheus_config:/etc/prometheus prom/prometheus
+	sudo firewall-cmd  --permanent --zone=public --add-port=9090/tcp
+	firewall-cmd --reload
+
+15. run noode_exporter on docker 
+	docker run -u root -d --name node_exporter -p 9100:9100 -v node_exporter_config:/etc/node_exporter  prom/node-exporter
+	firewall-cmd --permanent --zone=public --add-port=9100/tcp
+	firewall-cmd  --reload
+
+	ip:9100/metrics
+
+16. grafana
+query
+
+totalfilesystem
+node_filesystem_size_bytes{job="node_exporter",instance="40.76.109.0:9100",device="/dev/mapper/rootvg-varlv",fstype="xfs",mountpoint="/etc/hostname"}
+
+Avilable disk space 
+node_filesystem_avail_bytes{job="node_exporter",instance="40.76.108.69:9100"}
+
+used space 
+node_filesystem_size_bytes{job="node_exporter",instance="40.76.108.69:9100",device="/dev/mapper/rootvg-varlv",fstype="xfs",mountpoint="/etc/hostname"} - node_filesystem_avail_bytes{job="node_exporter",instance="40.76.108.69:9100"}
+
